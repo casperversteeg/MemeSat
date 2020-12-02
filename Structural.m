@@ -6,7 +6,7 @@
 %   2020/11/24
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%CREDITS%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clear all; close all; clc; 
+clear all; close all; clc; addpath("./FE", "./draw");
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%INITIALIZE VARIABLES%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Model constants:
