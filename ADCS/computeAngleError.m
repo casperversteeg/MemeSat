@@ -8,7 +8,7 @@ tmpb = [tmpx; tmpy; tmpz];
 tmpt = 0*tmpb;
 for i = 1:length(soln.x)
     A = attitudeMatrixFromQuaternion(soln.y(1:4, i) / vecnorm(soln.y(1:4,i)));
-    tmpt(:,i) = A * Sat.perm_mag;
+    tmpt(:,i) = A' * Sat.perm_mag;
 end
 
 e = acos(dot(tmpt, tmpb, 1) ./ (vecnorm(tmpt, 2, 1).*vecnorm(tmpb, 2, 1)));

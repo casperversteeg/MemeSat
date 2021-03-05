@@ -8,7 +8,7 @@ if nargin < 3
 end
 
 w_max = 1.5*Sat.w_max;
-B = Sat.perm_mag;
+mu = Sat.perm_mag;
 S = copy(Sat.model);
 S.Parent = ax;
 hold(ax, 'on');
@@ -27,10 +27,11 @@ an_z = text(0, 0, w_max, '$z$','interpreter','latex',...
 an = [an_x an_y an_z];
 
 if drawMagVec
-    Bq = quiver3(ax, 0, 0, 0, B(1), B(2), B(3), 10);
+    Bq = quiver3(ax, 0, 0, 0, mu(1), mu(2), mu(3), 10);
     Bq.LineWidth = 2; Bq.MaxHeadSize = 0.3; Bq.Color = 'cyan';
-    an_B = text(10*B(1), 10*B(2), 10*B(3), '$B_\mathrm{sat}$',...
-        'interpreter','latex','VerticalAlignment', 'bottom');
+    an_B = text(10*mu(1), 10*mu(2), 10*mu(3), ...
+        '$\vec{\mu}_\mathrm{sat}$', 'interpreter','latex',...
+        'VerticalAlignment', 'bottom');
     Q = [Q Bq];
     an = [an an_B];
 end

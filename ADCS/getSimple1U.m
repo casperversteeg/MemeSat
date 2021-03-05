@@ -47,5 +47,5 @@ close(f);
 
 Sat     = struct('model', P, 'mass_moi', I, 'mass', M,...
     'perm_mag', m_sat, 'w_max', w_max, 'omega', omega, ...
-    'attitude_quaternion', rot, 'hyst_rod', Hyst, 'B', [0;0;0]);
+    'attitude_quaternion', rot, 'old_attitude', 0*rot, 'hyst_rod', Hyst, 'B', [0;0;0]);
 end

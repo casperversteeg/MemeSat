@@ -64,12 +64,12 @@ classdef Satellite < handle
             % Connectivity array for faces [v1 v2 v3 v4]
             obj.faces = [1 2 3 4; 1 4 8 5; 5 6 7 8; ...
                          2 3 7 6; 1 2 6 5; 3 4 8 7];
-            obj.hysteresisRod = HysteresisRod(95, 1, 0.3381, 6.0618e-4, 0.3, [0;1;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 0.3381, 6.0618e-4, 0.3, [1;0;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 0.3381, 6.0618e-4, 0.3, [0;1;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 0.3381, 6.0618e-4, 0.3, [1;0;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 0.3381, 6.0618e-4, 0.3, [0;1;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 0.3381, 6.0618e-4, 0.3, [1;0;0], "HyMu-80");
+            obj.hysteresisRod = HysteresisRod(95, 1, 12, 0.004, 0.027, [0;1;0], "HyMu-80");
+            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 12, 0.004, 0.027, [1;0;0], "HyMu-80");
+            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 12, 0.004, 0.027, [0;1;0], "HyMu-80");
+            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 12, 0.004, 0.027, [1;0;0], "HyMu-80");
+            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 12, 0.004, 0.027, [0;1;0], "HyMu-80");
+            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 12, 0.004, 0.027, [1;0;0], "HyMu-80");
         end
         
         function Y = equationOfMotion(obj, t, ~, orbit)
@@ -94,16 +94,24 @@ classdef Satellite < handle
             switch (flag)
                 case 'init'
                     obj.tRange = [t(1) t(end)];
-                    fprintf('%s -- ', datetime());
+                    fprintf('%s', datetime());
                     fprintf("State initialized\n");
                 case 'done'
                     fprintf("Simulation finished\n"); 
-                    obj.pcntFlag = 0*obj.pcntFlag;
+                    obj.pcnt10Flag = false;
+                    obj.pcnt20Flag = false;
+                    obj.pcnt30Flag = false;
+                    obj.pcnt40Flag = false;
+                    obj.pcnt50Flag = false;
+                    obj.pcnt60Flag = false;
+                    obj.pcnt70Flag = false;
+                    obj.pcnt80Flag = false;
+                    obj.pcnt90Flag = false;
             end
-%             if ~isempty(y)
+            if ~isempty(y)
 %                 y(1:4, :) = y(1:4, :)./vecnorm(y(1:4,:));
 %                 odeplot(t/3600/24, y(5:7,:)*180/pi, flag);
-%             end
+            end
             if isempty(flag) || nargin < 4
                 [~, n] = size(y);
                 q = y(1:4,:)./vecnorm(y(1:4,:));
@@ -120,11 +128,34 @@ classdef Satellite < handle
         function obj = updateProgress(obj, t)
             tSpan = obj.tRange(2) - obj.tRange(1);
             for i = 1:100
-                if t(end) - obj.tRange(1) > i/100 * tSpan && ~obj.pcntFlag(i)
-                    fprintf("%s -- %d%% done\n", datetime(), i);
-                    obj.pcntFlag(1:i) = 1;
-                    continue;
-                end
+                if t(end) - obj.tRange(1) 
+            if t(end) - obj.tRange(1) > 0.1 * tSpan && ~obj.pcnt10Flag
+                fprintf("10%% done\n");
+                obj.pcnt10Flag = true;
+            elseif t(end) - obj.tRange(1) > 0.2 * tSpan && ~obj.pcnt20Flag
+                fprintf("20%% done\n");
+                obj.pcnt20Flag = true;
+            elseif t(end) - obj.tRange(1) > 0.3 * tSpan && ~obj.pcnt30Flag
+                    fprintf("30%% done\n");
+                obj.pcnt30Flag = true;
+            elseif t(end) - obj.tRange(1) > 0.4 * tSpan && ~obj.pcnt40Flag
+                fprintf("40%% done\n");
+                obj.pcnt40Flag = true;  
+            elseif t(end) - obj.tRange(1) > 0.5 * tSpan && ~obj.pcnt50Flag
+                fprintf("50%% done\n");
+                obj.pcnt50Flag = true;     
+            elseif t(end) - obj.tRange(1) > 0.6 * tSpan && ~obj.pcnt60Flag
+                fprintf("60%% done\n");
+                obj.pcnt60Flag = true;
+            elseif t(end) - obj.tRange(1) > 0.7 * tSpan && ~obj.pcnt70Flag
+                fprintf("70%% done\n");
+                obj.pcnt70Flag = true;
+            elseif t(end) - obj.tRange(1) > 0.8 * tSpan && ~obj.pcnt80Flag
+                fprintf("80%% done\n");
+                obj.pcnt80Flag = true;
+            elseif t(end) - obj.tRange(1) > 0.9 * tSpan && ~obj.pcnt90Flag
+                fprintf("90%% done\n");
+                obj.pcnt90Flag = true;
             end
         end
         

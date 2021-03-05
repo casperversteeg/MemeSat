@@ -14,11 +14,12 @@ ode2 = @(t, x) [-x(2) - x(1) + sin(pi*t); x(1)];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%END INITIALIZE%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[T1,X1] = ode45(ode1, [0 10], 0);
+optn = odeset('OutputFcn', @customodeprint);
+[T1,X1] = ode45(ode1, [0 10], 0, optn);
 [T2,X2] = ode45(ode2, [0 20], [0; 0]);
 
-subplot(1,2,1);
-plot(T1, X1);
-
-subplot(1,2,2);
-plot(T2, X2(:,2));
+% subplot(1,2,1);
+% plot(T1, X1);
+% 
+% subplot(1,2,2);
+% plot(T2, X2(:,2));
