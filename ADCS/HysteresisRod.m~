@@ -13,6 +13,8 @@ classdef HysteresisRod < handle
         h_hat(3,1) {mustBeNumeric} = [0; 0; 0]; % orientation
         
         H_mag_old = 0;
+        H_dot_old = 0;
+        B_hys_old = 0;
     end
     properties (Access = private)
         mu0 = 4e-7*pi; % Permeability of vacuum     [H/m]
@@ -41,16 +43,13 @@ classdef HysteresisRod < handle
             obj.h_hat = h_hat;
         end
         
-        function Bhyst = inducedMagneticField(obj, B, Bdot)
+        function Bhyst = inducedMagneticField(obj, B)
             %inducedMagneticField Magnetization of the hysteresis rod by
             % externally applied magnetic field
             %   Computes the induced magnetic field in the hysteresis rod,
             %   due to an applied magnetic field, B. Since hysteresis is a
             %   delayed effect, this also depends on the rate of change of
             %   the magnetic field, Bdot.
-            if nargin < 3
-                Bdot = - obj.mu0*obj.H_mag_old(end);
-            end
             [m, ~] = size(B);
             if m == 1
                 B_mag = B;
@@ -59,45 +58,44 @@ classdef HysteresisRod < handle
                     "External magnetic field must be a 3x1 vector");
                 B_mag = (obj.h_hat)' * B;
             end
-            if nargin < 3
-                Bdot = B_mag + Bdot;
-            end
             H_mag = B_mag / obj.mu0;
-%             obj.H_mag_old(end+1) = H_mag;
+            obj.H_dot_old(end+1) = H_mag - obj.H_mag_old(end);
+            obj.H_mag_old(end+1) = H_mag;
             Bhyst = 2/pi * obj.Bs * atan(obj.p...
-                *(H_mag + (-1).^(Bdot > 0) .* obj.Hc));
+                *(H_mag + (-1).^(obj.H_dot_old(end) > 0) .* obj.Hc));
+            obj.B_hys_old(end+1) = Bhyst;
         end
         
-        function m_hyst = inducedMagneticMoment(obj, B, Bdot)
+        function m_hyst = inducedMagneticMoment(obj, B)
             %inducedMagneticMoment Magnetic moment of the hysteresis rod 
             % due to externally applied magnetic field
             %   Computes the induced magnetic moment in the hysteresis rod,
             %   due to an applied magnetic field, B, by scaling the induced
             %   magnetic field by the rod's volume, and using the result of
             %   that to scale the orientation vector.
+            m_hyst = obj.inducedMagneticField(B, Bdot) ...
+                * obj.volume / obj.mu0 * obj.h_hat;
+        end
+        
+        function obj = plotHysteresisHistory(obj, ax)
             if nargin < 3
-                m_hyst = obj.inducedMagneticField(B) ...
-                    * obj.volume / obj.mu0 * obj.h_hat;
-            else
-                m_hyst = obj.inducedMagneticField(B, Bdot) ...
-                    * obj.volume / obj.mu0 * obj.h_hat;
+                f = figure;
+                ax = axes(f);
             end
-%             if nargin < 3
-%                 Bdot = - obj.mu0*obj.H_mag_old(end);
-%             end
-%             [m, ~] = size(B);
-%             if m == 1
-%                 B_mag = B;
-%             else
-%                 assert(m == 3, ...
-%                     "External magnetic field must be a 3x1 vector");
-%                 B_mag = (obj.h_hat)' * B;
-%             end
-%             if nargin < 3
-%                 Bdot = B_mag + Bdot;
-%             end
-%             m_hyst = obj.inducedMagneticField(B, Bdot) ...
-%                 * obj.volume / obj.mu0 * obj.h_hat;
+            hold(ax, 'on'); grid(ax, 'on'); 
+            plot(ax, obj.H_mag_old, obj.B_hys_old);
+            xlabel(ax, strcat('Magnetic Intensity, $H$', ...
+                ' ($\mathrm{A\cdot m^{-1}}$)'),'interpreter','latex');
+            ylabel(ax, strcat('Induced Magnetic Field, ', ...
+                '$B_\mathrm{hyst}$ ($\mathrm{T}$)'), 'interpreter',...
+                'latex');
+            t = "Hysteresis history";
+            if ~ismissing(obj.material)
+                t = strcat(t, " for ", obj.material);
+            end
+            title(ax, t, 'interpreter','latex');
+            ax.TickLabelInterpreter = 'latex';
+            hold(ax,'off');
         end
         
         function P = plotHysteresisLoop(obj, Hlim, ax)
@@ -115,7 +113,8 @@ classdef HysteresisRod < handle
             x1 = linspace(-Hlim, Hlim, 100) * obj.mu0;
             x2 = fliplr(x1);
             x = [x1, x2, x1(1)];
-            Bhyst1 = obj.inducedMagneticField(x1, 1);
+            Bhyst1 = 2/pi * obj.Bs * atan(obj.p...
+                *(x1 + (-1).^(obj.H_dot_old(end) > 0) .* obj.Hc));
             Bhyst2 = obj.inducedMagneticField(x2, -1);
             Bhyst = [Bhyst1, Bhyst2, Bhyst1(1)];
             x = x / obj.mu0;

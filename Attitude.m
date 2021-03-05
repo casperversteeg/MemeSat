@@ -13,7 +13,7 @@ clear all; close all; clc; addpath(genpath("./ADCS/"));
 genVid  = false;
 
 % Model constants:
-N       = 20;                    % Number of orbits to simulate
+N       = 2;                    % Number of orbits to simulate
 
 % Two-line orbital elements (ISS, cite [1])
 % S = ['1 25544U 98067A   20268.74436096  .00016717  00000-0  10270-3 0  9048'; ...
@@ -24,24 +24,24 @@ S = ['1 90039U      0   12268.58971383  .00002482  00000-0  23852-3 0  0208';...
 
 E = Earth;
 M = Satellite('MEMESat-1');
-M.initializeAngularVelocity([0.17; -0.97; 2.93]*pi/180);
+%M.initializeAngularVelocity([0.17; -0.97; 2.93]*pi/180);
 F = Orbit(S, E, M);
 % F.inclination = 2;
 
 
-optn = odeset('RelTol', 1e-6);
+optn = odeset('RelTol', 1e-10);
 % optn.Refine = 1;
-optn.MaxStep = 0.1;
-% optn.AbsTol = 1e-6;
+optn.InitialStep = 1e-5;
+optn.MaxStep = 0.01;
+%optn.AbsTol = 1e-12;
 
-
-f = figure;
-ax1 = subplot(1,2,1);
-F.addToAxes(ax1);
-E.magneticField.addToAxes(1.2*E.radius ,ax1);
-
-ax2 = subplot(1,2,2);
-M.addToAxes(ax2);
+% f = figure;
+% ax1 = subplot(1,2,1);
+% F.addToAxes(ax1);
+% E.magneticField.addToAxes(1.2*E.radius ,ax1);
+% 
+% ax2 = subplot(1,2,2);
+% M.addToAxes(ax2);
 
 figure;
 F.fly(N, optn, @ode15s);

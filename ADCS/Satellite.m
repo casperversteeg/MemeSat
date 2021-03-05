@@ -64,12 +64,12 @@ classdef Satellite < handle
             % Connectivity array for faces [v1 v2 v3 v4]
             obj.faces = [1 2 3 4; 1 4 8 5; 5 6 7 8; ...
                          2 3 7 6; 1 2 6 5; 3 4 8 7];
-            obj.hysteresisRod = HysteresisRod(95, 1, 0.3381, 6.0618e-4, 0.3, [0;1;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 0.3381, 6.0618e-4, 0.3, [1;0;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 0.3381, 6.0618e-4, 0.3, [0;1;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 0.3381, 6.0618e-4, 0.3, [1;0;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 0.3381, 6.0618e-4, 0.3, [0;1;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = HysteresisRod(95, 1, 0.3381, 6.0618e-4, 0.3, [1;0;0], "HyMu-80");
+            obj.hysteresisRod = ArctanHysteresis(95, 1, 0.3381, 6.0618e-4, 0.3, [0;1;0], "HyMu-80");
+            obj.hysteresisRod(end+1) = ArctanHysteresis(95, 1, 0.3381, 6.0618e-4, 0.3, [1;0;0], "HyMu-80");
+            obj.hysteresisRod(end+1) = ArctanHysteresis(95, 1, 0.3381, 6.0618e-4, 0.3, [0;1;0], "HyMu-80");
+            obj.hysteresisRod(end+1) = ArctanHysteresis(95, 1, 0.3381, 6.0618e-4, 0.3, [1;0;0], "HyMu-80");
+            obj.hysteresisRod(end+1) = ArctanHysteresis(95, 1, 0.3381, 6.0618e-4, 0.3, [0;1;0], "HyMu-80");
+            obj.hysteresisRod(end+1) = ArctanHysteresis(95, 1, 0.3381, 6.0618e-4, 0.3, [1;0;0], "HyMu-80");
         end
         
         function Y = equationOfMotion(obj, t, ~, orbit)
@@ -100,10 +100,10 @@ classdef Satellite < handle
                     fprintf("Simulation finished\n"); 
                     obj.pcntFlag = 0*obj.pcntFlag;
             end
-%             if ~isempty(y)
+            if ~isempty(y)
 %                 y(1:4, :) = y(1:4, :)./vecnorm(y(1:4,:));
-%                 odeplot(t/3600/24, y(5:7,:)*180/pi, flag);
-%             end
+                odeplot(t/3600, y(5:7,:)*180/pi, flag);
+            end
             if isempty(flag) || nargin < 4
                 [~, n] = size(y);
                 q = y(1:4,:)./vecnorm(y(1:4,:));

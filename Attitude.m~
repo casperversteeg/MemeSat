@@ -13,9 +13,7 @@ clear all; close all; clc; addpath(genpath("./ADCS/"));
 genVid  = false;
 
 % Model constants:
-N       = 1;                    % Number of orbits to simulate
-RE      = 6378e3;               % Radius of Earth,              [m]
-
+N       = 2;                    % Number of orbits to simulate
 
 % Two-line orbital elements (ISS, cite [1])
 % S = ['1 25544U 98067A   20268.74436096  .00016717  00000-0  10270-3 0  9048'; ...
@@ -33,10 +31,9 @@ F = Orbit(S, E, M);
 
 optn = odeset('RelTol', 1e-6);
 % optn.Refine = 1;
-optn.MaxStep = 0.1;
+optn.MaxStep = 0.01;
 optn.AbsTol = 1e-6;
 
-% F.fly(N, optn, @ode15s);
 f = figure;
 ax1 = subplot(1,2,1);
 F.addToAxes(ax1);
@@ -45,7 +42,10 @@ E.magneticField.addToAxes(1.2*E.radius ,ax1);
 ax2 = subplot(1,2,2);
 M.addToAxes(ax2);
 
-F.fly(N, optn, @ode45);
+figure;
+F.fly(N, optn, @ode15s);
+ F.fly(N, optn, @ode45);
+figure;
 L = min([length(M.solnAngularVelocity) length(M.solnTime)]); 
 plot(M.solnTime(1:L)/3600, M.solnAngularVelocity(:, 1:L)*180/pi);
 
