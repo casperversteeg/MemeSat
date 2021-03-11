@@ -58,11 +58,13 @@ classdef Orbit < handle
             optn.OutputFcn = @(t, y, flag) obj.satellite.stateUpdate(t,y, flag);
             optn.Stats = 'on';
             optn.MassSingular = 'no';
-%             optn.MStateDependence = 'none';
+            IC = [obj.satellite.attitudeQuaternion; ...
+                obj.satellite.angularVelocity];
+            numFlatley = length(obj.satellite.hysteresisRod.Flatley);
+            IC = [IC; zeros(numFlatley, 1)];
             solver(@(t, y) obj.satellite.equationOfMotion(t, y, obj), ...
                 [0, N*obj.secPerOrbit] + obj.satellite.solnTime(end), ...
-                [obj.satellite.attitudeQuaternion; ...
-                obj.satellite.angularVelocity], optn);
+                IC, optn);
         end
         
         function [rx, ry, rz] = satellitePosition(obj, t, useAnomaly)

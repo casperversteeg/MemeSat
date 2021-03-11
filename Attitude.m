@@ -13,7 +13,7 @@ clear all; close all; clc; addpath(genpath("./ADCS/"));
 genVid  = false;
 
 % Model constants:
-N       = 2;                    % Number of orbits to simulate
+N       = 10;                    % Number of orbits to simulate
 
 % Two-line orbital elements (ISS, cite [1])
 % S = ['1 25544U 98067A   20268.74436096  .00016717  00000-0  10270-3 0  9048'; ...
@@ -23,16 +23,16 @@ S = ['1 90039U      0   12268.58971383  .00002482  00000-0  23852-3 0  0208';...
      '2 90039  64.6731 007.9077 0219372 286.2692 203.1718 14.79135411  1569'];
 
 E = Earth;
-M = Satellite('MEMESat-1');
-%M.initializeAngularVelocity([0.17; -0.97; 2.93]*pi/180);
-F = Orbit(S, E, M);
-% F.inclination = 2;
+SC = CCSWE;
+SC.initializeAngularVelocity([0.17; -0.97; 2.93]*pi/180);
+F = Orbit(S, E, SC);
+F.inclination = 2;
 
 
-optn = odeset('RelTol', 1e-10);
+optn = odeset('RelTol', 1e-8);
 % optn.Refine = 1;
 optn.InitialStep = 1e-5;
-optn.MaxStep = 0.01;
+optn.MaxStep = 0.1;
 %optn.AbsTol = 1e-12;
 
 % f = figure;
@@ -41,15 +41,15 @@ optn.MaxStep = 0.01;
 % E.magneticField.addToAxes(1.2*E.radius ,ax1);
 % 
 % ax2 = subplot(1,2,2);
-% M.addToAxes(ax2);
+% SC.addToAxes(ax2);
 
 figure;
-F.fly(N, optn, @ode15s);
+F.fly(N, optn, @ode23);
 % F.fly(N, optn, @ode45);
-figure;
-L = min([length(M.solnAngularVelocity) length(M.solnTime)]); 
-plot(M.solnTime(1:L)/3600, M.solnAngularVelocity(:, 1:L)*180/pi);
-
+f = figure; ax = axes(f); hold(ax, 'on'); grid(ax, 'on');
+L = min([length(SC.solnAngularVelocity) length(SC.solnTime)]); 
+plot(ax, SC.solnTime(1:L)/3600, SC.solnAngularVelocity(:, 1:L)*180/pi);
+plot(ax, SC.solnTime(1:L)/3600, vecnorm(SC.solnAngularVelocity(:, 1:L)*180/pi), 'k');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%END INITIALIZE%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

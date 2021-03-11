@@ -1,4 +1,4 @@
-classdef Satellite < handle
+classdef (Abstract) SpacecraftBase < handle
     %SATELLITE Physical parameters and graphics methods
     %   A class structure that contains all the necessary elements to
     %   properly simulate the dynamic behavior of a satellite (i.e. moments
@@ -18,7 +18,7 @@ classdef Satellite < handle
         vertices {mustBeNumeric}
         faces {mustBeInteger}
         
-        hysteresisRod = [];
+        hysteresisRod = struct('Flatley', [], 'other', []);
         
         solnTime(1,:) {mustBeNumeric} = 0;
     end
@@ -34,63 +34,33 @@ classdef Satellite < handle
     end
     
     methods
-        function obj = Satellite(name)
-            %SATELLITE Constructs a 1U satellite
-            %   Constructs an instance of Satellite as a 1U, 1kg cubesat,
-            %   with the center of mass in the geometric center, and all
-            %   mass evenly distributed. Has a permanent magnetic moment
-            %   with strength ~5e-3 A m^2.
-            
-            obj.name = name;
-            % Dimensions [x y z] [m]
-            obj.dim = [0.1 0.1 0.3];
-            % Mass [kg]
-            obj.mass = 1;
-            % Mass moment of inertia tensor [kg m^2]
-%             Ixx = obj.mass * (obj.dim(2)^2 + obj.dim(3)^2)/12;
-%             Iyy = obj.mass * (obj.dim(1)^2 + obj.dim(3)^2)/12;
-%             Izz = obj.mass * (obj.dim(1)^2 + obj.dim(2)^2)/12;
-            Ixx = 2.22e-2; Iyy = 2.18e-2; Izz = 5e-3;
-            obj.I = diag([Ixx Iyy Izz]); 
-            % Permanent magnetic dipole moment A m^2
-            obj.permanentMagnet = [0; 0; 1] * 0.55;
-            % Satellite vertices [x y z] [m]
-            V   = [1  1  1; -1  1  1; -1 -1  1; 1 -1  1; ...
-                   1  1 -1; -1  1 -1; -1 -1 -1; 1 -1 -1];
-            V(:,1) = V(:,1) * obj.dim(1)/2;
-            V(:,2) = V(:,2) * obj.dim(2)/2;
-            V(:,3) = V(:,3) * obj.dim(3)/2;
-            obj.vertices = V;
-            % Connectivity array for faces [v1 v2 v3 v4]
-            obj.faces = [1 2 3 4; 1 4 8 5; 5 6 7 8; ...
-                         2 3 7 6; 1 2 6 5; 3 4 8 7];
-            obj.hysteresisRod = ArctanHysteresis(95, 1, 0.3381, 6.0618e-4, 0.3, [0;1;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = ArctanHysteresis(95, 1, 0.3381, 6.0618e-4, 0.3, [1;0;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = ArctanHysteresis(95, 1, 0.3381, 6.0618e-4, 0.3, [0;1;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = ArctanHysteresis(95, 1, 0.3381, 6.0618e-4, 0.3, [1;0;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = ArctanHysteresis(95, 1, 0.3381, 6.0618e-4, 0.3, [0;1;0], "HyMu-80");
-            obj.hysteresisRod(end+1) = ArctanHysteresis(95, 1, 0.3381, 6.0618e-4, 0.3, [1;0;0], "HyMu-80");
-        end
-        
         function Y = equationOfMotion(obj, t, ~, orbit)
             [rh, th, ph] = orbit.satellitePositionSpherical(t);
             B_inertial = orbit.parentBody.magneticField.Bcart(rh, th, ph);
+            H_inertial = orbit.parentBody.magneticField.Hcart(rh, th, ph);
             B_body = obj.attitudeMatrix * B_inertial;
+            H_body = obj.attitudeMatrix * H_inertial;
             [~, n] = size(obj.permanentMagnet);
             T = [0;0;0];
             for i = 1:n
                 T = T + cross(obj.permanentMagnet(:,i), B_body);
             end
-            for i = 1:numel(obj.hysteresisRod)
-                T = T + cross(obj.hysteresisRod(i).inducedMagneticMoment(B_body), B_body);
+            BdotFlatley = zeros(numel(obj.hysteresisRod.Flatley), 1);
+            for i = 1:numel(obj.hysteresisRod.Flatley)
+                BdotFlatley(i) = ...
+                    obj.hysteresisRod.Flatley(i).inducedMagneticField(t,...
+                    obj.hysteresisRod.Flatley(i).solnBindrod(end), H_body);
+                T = T + obj.hysteresisRod.Flatley(i).hysteresisTorque(B_body);
+            end
+            for i = 1:numel(obj.hysteresisRod.other)
+                T = T + obj.hysteresisRod.other(i).hysteresisTorque(B_body);
             end
             qdot = 0.5 * OMEGA(obj.angularVelocity) * obj.attitudeQuaternion;
             wdot = -obj.I \ crossMatrix(obj.angularVelocity) * obj.I * obj.angularVelocity + obj.I \ T;
-            Y = [qdot; wdot]; 
+            Y = [qdot; wdot; BdotFlatley]; 
         end
         
         function status = stateUpdate(obj, t, y, flag)
-%             fprintf("%f\n", t);
             switch (flag)
                 case 'init'
                     obj.tRange = [t(1) t(end)];
@@ -101,7 +71,6 @@ classdef Satellite < handle
                     obj.pcntFlag = 0*obj.pcntFlag;
             end
             if ~isempty(y)
-%                 y(1:4, :) = y(1:4, :)./vecnorm(y(1:4,:));
                 odeplot(t/3600, y(5:7,:)*180/pi, flag);
             end
             if isempty(flag) || nargin < 4
@@ -112,6 +81,9 @@ classdef Satellite < handle
                 obj.attitudeQuaternion = q(:,end);
                 obj.solnAngularVelocity(:,end+1:end+n) = y(5:7, :);
                 obj.angularVelocity = y(5:7, end);
+                for i = 1:numel(obj.hysteresisRod.Flatley)
+                    obj.hysteresisRod.Flatley(i).stateUpdate(t, y(7+i, :), flag);
+                end
                 obj.updateProgress(t);
             end
             status = 0;
